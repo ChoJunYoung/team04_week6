@@ -30,8 +30,11 @@ import java.util.HashMap;
 public class InGameSummonerQuerier {
     private final String apiKey;
     private final GameParticipantListener listener;
-    @Getter @Setter
+
+
+    private final HttpClient client = HttpClientBuilder.create().build();
     private InGameInfo gameInfo;
+
 
     public InGameInfo getGameInfo() {
 		return gameInfo;
@@ -43,11 +46,10 @@ public class InGameSummonerQuerier {
     }
 
     public String queryGameKey(String summonerName) throws IOException {
-        HttpClient client = HttpClientBuilder.create().build();
 
-        String summonerId = httpSommonerRequest(summonerName, client);
+        String summonerId = httpSommonerRequest(summonerName);
 
-        gameInfo = httpInGameRequest(client, summonerId);
+        gameInfo = httpInGameRequest(summonerId);
 
         Arrays.asList(gameInfo.getParticipants()).forEach((InGameInfo.Participant participant) -> {
             listener.player(participant.getSummonerName());
@@ -56,7 +58,7 @@ public class InGameSummonerQuerier {
         return gameInfo.getObservers().getEncryptionKey();
     }
 
-	private InGameInfo httpInGameRequest(HttpClient client, String summonerId)
+	public InGameInfo httpInGameRequest(String summonerId)
 			throws IOException, ClientProtocolException {
 		HttpUriRequest inGameRequest = buildObserverHttpRequest(summonerId);
         HttpResponse inGameResponse = client.execute(inGameRequest);
@@ -65,7 +67,7 @@ public class InGameSummonerQuerier {
 		return gameInfo;
 	}
 
-	private String httpSommonerRequest(String summonerName, HttpClient client)
+	public String httpSommonerRequest(String summonerName)
 			throws UnsupportedEncodingException, IOException, ClientProtocolException {
 		HttpUriRequest summonerRequest = buildApiHttpRequest(summonerName);
         HttpResponse summonerResponse = client.execute(summonerRequest);
